@@ -1,0 +1,34 @@
+---
+- name: 'Configure non-bridge interfaces'
+  uci:
+    command: section
+    config: network
+    type: interface
+    name: "{{ interface.key }}"
+    value: "{{
+      {
+        'ipaddr': interface.value['ip'] | default([]) | ansible.utils.ipv4('address') or omit,
+        'netmask': interface.value['ip'] | default([]) | ansible.utils.ipv4('netmask') or omit,
+        'proto': 'static' if interface.value['ip'] is defined else 'none'
+      } | combine(interface.value | combine({'ip': omit}))
+    }}"
+    replace: true
+  notify:
+    - _openwrt_uci_commit
+    - _openwrt_restart_network
+  loop: "{{ openwrt_interfaces | dict2items | rejectattr('value.ports', 'defined') | rejectattr('value.vlan', 'defined') }}"
+  loop_control:
+    loop_var: interface
+    label: "{{ interface.key }}"
+  tags:
+    - interface
+
+- name: 'Configure switch'
+  ansible.builtin.include_tasks: bridge.yml
+  loop: "{{ openwrt_interfaces | dict2items }}"
+  loop_control:
+    loop_var: bridge
+    label: "{{ bridge.key }}"
+  when: "bridge.value['ports'] is defined or bridge.value['vlan'] is defined"
+  tags:
+    - always

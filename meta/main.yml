@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  author: 'Sebastian Hamann'
+  description: 'DSA network interface configuration (IP, bridgge, VLAN) for OpenWrt'
+
+  license: MIT
+
+  min_ansible_version: '2.10'
+
+  platforms:
+    - name: GenericLinux
+
+  galaxy_tags:
+    - openwrt
+    - system
+    - networking
+    - bridge
+    - vlan
+
+dependencies: []

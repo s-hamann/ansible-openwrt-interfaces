@@ -1,0 +1,87 @@
+---
+- name: 'Configure bridge'
+  uci:
+    command: section
+    config: network
+    type: device
+    name: "{{ bridge.key }}"
+    value:
+      type: bridge
+      name: "{{ bridge.key }}"
+      ports: "{{ bridge.value['ports'] | default(bridge.value['vlan'].values() | map(attribute='ports') | flatten | map('regex_replace', ':[ut]\\*?', '')) | expand_ranges | map('regex_replace', '^(?=[0-9])', 'lan') | unique }}"
+  notify:
+    - _openwrt_uci_commit
+    - _openwrt_restart_network
+  tags:
+    - bridge
+
+- name: 'Configure bridge interfaces'
+  uci:
+    command: section
+    config: network
+    type: interface
+    name: "{{ bridge.key }}"
+    value: "{{
+      {
+        'device': bridge.key,
+        'ipaddr': bridge.value['ip'] | default([]) | ansible.utils.ipv4('address') or omit,
+        'netmask': bridge.value['ip'] | default([]) | ansible.utils.ipv4('netmask') or omit,
+        'proto': 'static' if bridge.value['ip'] is defined else 'none'
+      } | combine(bridge.value | combine({'ports': omit, 'ip': omit}))
+    }}"
+    replace: true
+  notify:
+    - _openwrt_uci_commit
+    - _openwrt_restart_network
+  when: "bridge.value['vlan'] is not defined"
+  tags:
+    - bridge
+
+- name: 'Configure VLAN'
+  uci:
+    command: section
+    config: network
+    type: bridge-vlan
+    name: "{{ vlan.key }}_vlan"
+    value:
+      device: "{{ bridge.key }}"
+      vlan: "{{ vlan.value['id'] }}"
+      ports: "{{ vlan.value['ports'] | expand_ranges | map('regex_replace', '^(?=[0-9])', 'lan') | unique }}"
+    replace: true
+  notify:
+    - _openwrt_uci_commit
+    - _openwrt_restart_network
+  when: "bridge.value['vlan'] is defined"
+  loop: "{{ bridge.value['vlan'] | dict2items }}"
+  loop_control:
+    loop_var: vlan
+    label: "{{ vlan.key }}"
+  tags:
+    - vlan
+
+- name: 'Configure VLAN interfaces'
+  uci:
+    command: section
+    config: network
+    type: interface
+    name: "{{ vlan.key }}"
+    value: "{{
+      {
+        'device': bridge.key ~ '.' ~ vlan.value['id'],
+        'ipaddr': vlan.value['ip'] | default([]) | ansible.utils.ipv4('address') or omit,
+        'netmask': vlan.value['ip'] | default([]) | ansible.utils.ipv4('netmask') or omit,
+        'proto': 'static' if vlan.value['ip'] is defined else 'none'
+      } | combine(vlan.value | combine({'id': omit, 'ports': omit, 'ip': omit}))
+    }}"
+    replace: true
+  notify:
+    - _openwrt_uci_commit
+    - _openwrt_restart_network
+  when: "bridge.value['vlan'] is defined"
+  loop: "{{ bridge.value['vlan'] | dict2items }}"
+  loop_control:
+    loop_var: vlan
+    label: "{{ vlan.key }}"
+  tags:
+    - vlan
+    - interface

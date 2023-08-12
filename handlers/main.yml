@@ -1,0 +1,12 @@
+---
+- name: 'Commit changes to uci'
+  uci:
+    command: commit
+  listen: _openwrt_uci_commit
+
+- name: 'Restart network'
+  ansible.builtin.service:
+    name: network
+    state: restarted
+  when: "not ansible_facts['is_chroot']"
+  listen: _openwrt_restart_network
