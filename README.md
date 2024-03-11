@@ -7,7 +7,7 @@ It uses DSA configuration settings and is not compatible with targets that still
 Requirements
 ------------
 
-This role requires [gekmihesg's Ansible library for OpenWrt](https://github.com/gekmihesg/ansible-openwrt) and the [netaddr](https://github.com/netaddr/netaddr/) Python package on the Ansible controller.
+This role requires [gekmihesg's Ansible library for OpenWrt](https://github.com/gekmihesg/ansible-openwrt), the `ansible.utils` collection and the [netaddr](https://github.com/netaddr/netaddr/) Python package on the Ansible controller.
 
 Role Variables
 --------------
