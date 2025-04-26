@@ -9,7 +9,8 @@
       {
         'ipaddr': interface.value['ip'] | default([]) | ansible.utils.ipv4('address') or omit,
         'netmask': interface.value['ip'] | default([]) | ansible.utils.ipv4('netmask') or omit,
-        'proto': 'static' if interface.value['ip'] is defined else 'none'
+        'proto': 'static' if interface.value['ip'] is defined else 'none',
+        'ipv6': false if interface.value['proto'] | default('') == 'none' or (interface.value['proto'] is not defined and interface.value['ip'] is not defined) else omit,
       } | combine(interface.value | combine({'ip': omit}))
     }}"
     replace: true

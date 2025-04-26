@@ -26,7 +26,8 @@
         'device': bridge.key,
         'ipaddr': bridge.value['ip'] | default([]) | ansible.utils.ipv4('address') or omit,
         'netmask': bridge.value['ip'] | default([]) | ansible.utils.ipv4('netmask') or omit,
-        'proto': 'static' if bridge.value['ip'] is defined else 'none'
+        'proto': 'static' if bridge.value['ip'] is defined else 'none',
+        'ipv6': false if bridge.value['proto'] | default('') == 'none' or (bridge.value['proto'] is not defined and bridge.value['ip'] is not defined) else omit,
       } | combine(bridge.value | combine({'ports': omit, 'ip': omit}))
     }}"
     replace: true
@@ -70,7 +71,8 @@
         'device': bridge.key ~ '.' ~ vlan.value['id'],
         'ipaddr': vlan.value['ip'] | default([]) | ansible.utils.ipv4('address') or omit,
         'netmask': vlan.value['ip'] | default([]) | ansible.utils.ipv4('netmask') or omit,
-        'proto': 'static' if vlan.value['ip'] is defined else 'none'
+        'proto': 'static' if vlan.value['ip'] is defined else 'none',
+        'ipv6': false if vlan.value['proto'] | default('') == 'none' or (vlan.value['proto'] is not defined and vlan.value['ip'] is not defined) else omit,
       } | combine(vlan.value | combine({'id': omit, 'ports': omit, 'ip': omit}))
     }}"
     replace: true
